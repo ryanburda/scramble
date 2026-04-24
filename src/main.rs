@@ -310,9 +310,25 @@ fn draw(terminal: &mut Terminal<CrosstermBackend<io::Stdout>>, game: &Game) -> i
         let gap = 4u16;
         let total_w = grid_w + gap + goal_grid_w;
 
+        // Total content height: title(1) + stats(1) + gap(1) + board(grid_h) + gap(1) + help(2) = grid_h + 6
+        let content_h = grid_h + 6;
+        let border_pad = 2u16; // 1 for border + 1 for padding on each side
+        let outer_w = total_w + border_pad * 2;
+        let outer_h = content_h + border_pad * 2;
+
         // Center everything
-        let x = area.x + area.width.saturating_sub(total_w) / 2;
-        let y = area.y + area.height.saturating_sub(grid_h + 6) / 2;
+        let outer_x = area.x + area.width.saturating_sub(outer_w) / 2;
+        let outer_y = area.y + area.height.saturating_sub(outer_h) / 2;
+        let x = outer_x + border_pad;
+        let y = outer_y + border_pad;
+
+        // Green border around entire game when solved
+        if game.solved {
+            let outer_border = Block::default()
+                .borders(Borders::ALL)
+                .border_style(Style::default().fg(Color::Green));
+            frame.render_widget(outer_border, Rect::new(outer_x, outer_y, outer_w, outer_h));
+        }
 
         // Title line: SCRAMBLE + countdown
         let mut title_spans = vec![
