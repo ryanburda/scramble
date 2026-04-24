@@ -216,6 +216,20 @@ impl Game {
         }
     }
 
+    fn correct_count(&self) -> usize {
+        let mut count = 0;
+        for r in 0..3 {
+            for c in 0..3 {
+                if let Tile::Color(tc) = self.board[r + 1][c + 1] {
+                    if tc == self.goal[r][c] {
+                        count += 1;
+                    }
+                }
+            }
+        }
+        count
+    }
+
     fn is_counting_down(&self) -> bool {
         matches!(self.countdown_end, Some(end) if Instant::now() < end)
     }
@@ -310,8 +324,8 @@ fn draw(terminal: &mut Terminal<CrosstermBackend<io::Stdout>>, game: &Game) -> i
         let gap = 4u16;
         let total_w = grid_w + gap + goal_grid_w;
 
-        // Total content height: title(1) + stats(1) + gap(1) + board(grid_h) + gap(1) + help(2) = grid_h + 6
-        let content_h = grid_h + 6;
+        // Total content height: title(1) + stats(1) + gap(1) + board(grid_h) + gap(1) + bar(1) + gap(1) + help(2) = grid_h + 8
+        let content_h = grid_h + 8;
         let border_pad = 2u16; // 1 for border + 1 for padding on each side
         let outer_w = total_w + border_pad * 2;
         let outer_h = content_h + border_pad * 2;
@@ -426,8 +440,26 @@ fn draw(terminal: &mut Terminal<CrosstermBackend<io::Stdout>>, game: &Game) -> i
             }
         }
 
+        // Progress bar
+        let bar_y = y + 3 + grid_h + 1;
+        let correct = game.correct_count();
+        let seg_w = total_w / 9;
+        let bar_w = seg_w * 9;
+        let bar_color = if game.solved { Color::Green } else { Color::Cyan };
+        let mut bar_spans: Vec<Span> = Vec::new();
+        for i in 0..9 {
+            let ch = if i < correct { "█" } else { "░" };
+            let color = if i < correct { bar_color } else { Color::DarkGray };
+            bar_spans.push(Span::styled(
+                ch.repeat(seg_w as usize),
+                Style::default().fg(color),
+            ));
+        }
+        let bar = Paragraph::new(Line::from(bar_spans));
+        frame.render_widget(bar, Rect::new(x, bar_y, bar_w, 1));
+
         // Help text
-        let help_y = y + 3 + grid_h + 1;
+        let help_y = bar_y + 2;
         let help_line1 = Paragraph::new(Line::from(vec![
             Span::styled(
                 "Slide tiles to match the inner 3x3 to the goal.",
