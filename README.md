@@ -14,14 +14,14 @@ Tiles must be in the same row or column as the empty space.
 
 The board maps to your keyboard, split across both hands:
 
-**Left hand** (bottom of the board):
+**Left hand** (top of the board):
 ```
  q  w  e  r  t      1st row (top)
  a  s  d  f  g      2th row
  z  x  c  v  b      3rd row (middle)
 ```
 
-**Right hand** (top of the board):
+**Right hand** (bottom of the board):
 ```
  y  u  i  o  p      3rd row (middle)
  h  j  k  l  ;      4th row
@@ -34,6 +34,7 @@ Row 3 (middle) is accessible from both your left and right hand.
 
 - **Tile keys** - Slide a tile toward the empty space
 - **Space** - Start a new game
+- **Tab** - Toggle keymap overlay
 - **Esc** - Quit
 
 ### Gameplay
