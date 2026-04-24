@@ -42,3 +42,23 @@ Row 3 (middle) is accessible from both your left and right hand.
 A 3-second countdown plays before each game. Once it ends, the timer starts and you can begin sliding tiles.
 A progress bar below the board tracks how many of the 9 inner tiles are in the correct position.
 Match all 9 to the goal to win.
+
+## Installation
+
+### Prerequisites
+
+- [Rust](https://www.rust-lang.org/tools/install) (1.85+)
+
+### Build and run
+
+```sh
+git clone https://github.com/ryanburda/scramble.git
+cd scramble
+cargo run --release
+```
+
+### Install with cargo
+
+```sh
+cargo install --path .
+```
