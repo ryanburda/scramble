@@ -82,6 +82,7 @@ struct Game {
     started_at: Instant,
     solve_time: Option<Duration>,
     countdown_end: Option<Instant>,
+    show_keys: bool,
 }
 
 impl Game {
@@ -129,6 +130,7 @@ impl Game {
             started_at: countdown_end,
             solve_time: None,
             countdown_end: Some(countdown_end),
+            show_keys: true,
         };
         game.check_solved();
         game
@@ -263,7 +265,12 @@ impl Game {
     }
 }
 
-fn render_tile_cell(tile: Tile, key: char, in_goal_zone: bool) -> Vec<Line<'static>> {
+fn render_tile_cell(tile: Tile, key: char, in_goal_zone: bool, show_keys: bool) -> Vec<Line<'static>> {
+    let key_str = if show_keys {
+        format!(" {:<6}", key)
+    } else {
+        format!("{:7}", "")
+    };
     match tile {
         Tile::Color(color) => {
             let bg = color.to_ratatui_color();
@@ -273,7 +280,7 @@ fn render_tile_cell(tile: Tile, key: char, in_goal_zone: bool) -> Vec<Line<'stat
             };
             let style = Style::default().fg(fg).bg(bg);
             vec![
-                Line::from(Span::styled(format!(" {:<6}", key), style)),
+                Line::from(Span::styled(key_str, style)),
                 Line::from(Span::styled(format!("{:7}", ""), style)),
                 Line::from(Span::styled(format!("{:7}", ""), style)),
             ]
@@ -286,7 +293,7 @@ fn render_tile_cell(tile: Tile, key: char, in_goal_zone: bool) -> Vec<Line<'stat
             };
             let style = Style::default().fg(fg);
             vec![
-                Line::from(Span::styled(format!(" {:<6}", key), style)),
+                Line::from(Span::styled(key_str, style)),
                 Line::from(Span::raw("")),
                 Line::from(Span::raw("")),
             ]
@@ -399,7 +406,7 @@ fn draw(terminal: &mut Terminal<CrosstermBackend<io::Stdout>>, game: &Game) -> i
                 let tile = game.board[r][c];
                 let key = KEY_LABELS[r][c];
                 let in_goal_zone = r >= 1 && r <= 3 && c >= 1 && c <= 3;
-                let lines = render_tile_cell(tile, key, in_goal_zone);
+                let lines = render_tile_cell(tile, key, in_goal_zone, game.show_keys);
                 frame.render_widget(Paragraph::new(lines), *cell_area);
             }
         }
@@ -469,6 +476,8 @@ fn draw(terminal: &mut Terminal<CrosstermBackend<io::Stdout>>, game: &Game) -> i
         let help_line2 = Paragraph::new(Line::from(vec![
             Span::styled("Space", Style::default().fg(Color::Yellow)),
             Span::styled(": new  ", Style::default().fg(Color::DarkGray)),
+            Span::styled("Tab", Style::default().fg(Color::Yellow)),
+            Span::styled(": keys  ", Style::default().fg(Color::DarkGray)),
             Span::styled("Esc", Style::default().fg(Color::Yellow)),
             Span::styled(": quit", Style::default().fg(Color::DarkGray)),
         ]));
@@ -498,7 +507,12 @@ fn main() -> io::Result<()> {
                 }
                 match key.code {
                     KeyCode::Esc => break,
-                    KeyCode::Char(' ') => game = Game::new(),
+                    KeyCode::Char(' ') => {
+                        let keys = game.show_keys;
+                        game = Game::new();
+                        game.show_keys = keys;
+                    }
+                    KeyCode::Tab => game.show_keys = !game.show_keys,
                     KeyCode::Char(c) => {
                         if !game.solved && !game.is_counting_down() {
                             game.handle_key(c);
