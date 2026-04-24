@@ -4,15 +4,15 @@ use std::time::{Duration, Instant};
 use crossterm::event::{self, Event, KeyCode, KeyEventKind};
 use crossterm::execute;
 use crossterm::terminal::{
-    disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen,
+    EnterAlternateScreen, LeaveAlternateScreen, disable_raw_mode, enable_raw_mode,
 };
 use rand::seq::SliceRandom;
+use ratatui::Terminal;
 use ratatui::backend::CrosstermBackend;
 use ratatui::layout::{Constraint, Layout, Rect};
 use ratatui::style::{Color, Style};
 use ratatui::text::{Line, Span};
 use ratatui::widgets::{Block, Borders, Paragraph};
-use ratatui::Terminal;
 
 const ROWS: usize = 5;
 const COLS: usize = 5;
@@ -71,7 +71,6 @@ impl TileColor {
             TileColor::Orange => Color::Rgb(255, 165, 0),
         }
     }
-
 }
 
 struct Game {
@@ -323,12 +322,7 @@ fn draw(terminal: &mut Terminal<CrosstermBackend<io::Stdout>>, game: &Game) -> i
         let col_constraints: Vec<Constraint> =
             (0..COLS).map(|_| Constraint::Length(tile_w)).collect();
 
-        let inner_rect = Rect::new(
-            inner_x,
-            inner_y,
-            tile_w * COLS as u16,
-            tile_h * ROWS as u16,
-        );
+        let inner_rect = Rect::new(inner_x, inner_y, tile_w * COLS as u16, tile_h * ROWS as u16);
         let rows = Layout::vertical(row_constraints).split(inner_rect);
 
         for (r, row_area) in rows.iter().enumerate() {
@@ -367,12 +361,7 @@ fn draw(terminal: &mut Terminal<CrosstermBackend<io::Stdout>>, game: &Game) -> i
         let goal_col_constraints: Vec<Constraint> =
             (0..3).map(|_| Constraint::Length(goal_tile_w)).collect();
 
-        let goal_inner_rect = Rect::new(
-            goal_inner_x,
-            goal_inner_y,
-            goal_tile_w * 3,
-            tile_h * 3,
-        );
+        let goal_inner_rect = Rect::new(goal_inner_x, goal_inner_y, goal_tile_w * 3, tile_h * 3);
         let goal_rows = Layout::vertical(goal_row_constraints).split(goal_inner_rect);
 
         for (r, row_area) in goal_rows.iter().enumerate() {
@@ -385,17 +374,20 @@ fn draw(terminal: &mut Terminal<CrosstermBackend<io::Stdout>>, game: &Game) -> i
 
         // Help text
         let help_y = y + 2 + grid_h + 1;
-        let help = Paragraph::new(Line::from(vec![
+        let help_line1 = Paragraph::new(Line::from(vec![
             Span::styled(
-                "Slide tiles to match the inner 3x3 to the goal. ",
+                "Slide tiles to match the inner 3x3 to the goal.",
                 Style::default().fg(Color::DarkGray),
             ),
-            Span::styled("N", Style::default().fg(Color::Yellow)),
+        ]));
+        let help_line2 = Paragraph::new(Line::from(vec![
+            Span::styled("Space", Style::default().fg(Color::Yellow)),
             Span::styled(": new  ", Style::default().fg(Color::DarkGray)),
             Span::styled("Esc", Style::default().fg(Color::Yellow)),
             Span::styled(": quit", Style::default().fg(Color::DarkGray)),
         ]));
-        frame.render_widget(help, Rect::new(x, help_y, total_w + 10, 1));
+        frame.render_widget(help_line1, Rect::new(x, help_y, total_w + 10, 1));
+        frame.render_widget(help_line2, Rect::new(x, help_y + 1, total_w + 10, 1));
     })?;
     Ok(())
 }
@@ -420,7 +412,7 @@ fn main() -> io::Result<()> {
                 }
                 match key.code {
                     KeyCode::Esc => break,
-                    KeyCode::Char('N') => game = Game::new(),
+                    KeyCode::Char(' ') => game = Game::new(),
                     KeyCode::Char(c) => {
                         if !game.solved {
                             game.handle_key(c);
