@@ -312,23 +312,36 @@ fn draw(terminal: &mut Terminal<CrosstermBackend<io::Stdout>>, game: &Game) -> i
 
         // Center everything
         let x = area.x + area.width.saturating_sub(total_w) / 2;
-        let y = area.y + area.height.saturating_sub(grid_h + 4) / 2;
+        let y = area.y + area.height.saturating_sub(grid_h + 6) / 2;
 
-        // Title
+        // Title line: SCRAMBLE + countdown
+        let mut title_spans = vec![
+            Span::styled("SCRAMBLE", Style::default().fg(Color::Cyan)),
+        ];
+        if game.is_counting_down() {
+            let count = game.countdown_remaining();
+            title_spans.push(Span::styled(
+                format!("  {}", count),
+                Style::default().fg(Color::Yellow),
+            ));
+        }
+        let title = Paragraph::new(Line::from(title_spans));
+        frame.render_widget(title, Rect::new(x, y, total_w + 10, 1));
+
+        // Stats line: moves + time + solved
         let elapsed = game.elapsed();
         let secs = elapsed.as_secs();
         let tenths = elapsed.subsec_millis() / 100;
         let time_str = format!("{:02}:{:02}.{}", secs / 60, secs % 60, tenths);
         let status = if game.solved { "  SOLVED!" } else { "" };
-        let title = Paragraph::new(Line::from(vec![
-            Span::styled("SCRAMBLE", Style::default().fg(Color::Cyan)),
-            Span::raw(format!("  moves: {}  time: {}", game.moves, time_str)),
+        let stats = Paragraph::new(Line::from(vec![
+            Span::raw(format!("moves: {}  time: {}", game.moves, time_str)),
             Span::styled(status, Style::default().fg(Color::Green)),
         ]));
-        frame.render_widget(title, Rect::new(x, y, total_w + 10, 1));
+        frame.render_widget(stats, Rect::new(x, y + 1, total_w + 10, 1));
 
         // === Board grid ===
-        let grid_rect = Rect::new(x, y + 2, grid_w, grid_h);
+        let grid_rect = Rect::new(x, y + 3, grid_w, grid_h);
         let board_border_color = if game.solved {
             Color::Green
         } else {
@@ -364,7 +377,7 @@ fn draw(terminal: &mut Terminal<CrosstermBackend<io::Stdout>>, game: &Game) -> i
         // === Goal grid ===
         let goal_x = x + grid_w + gap;
         // Vertically center the goal next to the board
-        let goal_y = y + 2 + (grid_h.saturating_sub(goal_grid_h + 2)) / 2;
+        let goal_y = y + 3 + (grid_h.saturating_sub(goal_grid_h + 2)) / 2;
 
         let goal_label = Paragraph::new(Line::from(Span::styled(
             "GOAL",
@@ -397,20 +410,8 @@ fn draw(terminal: &mut Terminal<CrosstermBackend<io::Stdout>>, game: &Game) -> i
             }
         }
 
-        // Countdown overlay
-        if game.is_counting_down() {
-            let count = game.countdown_remaining();
-            let countdown_text = Paragraph::new(Line::from(Span::styled(
-                format!("{}", count),
-                Style::default().fg(Color::Yellow),
-            )));
-            let cx = grid_rect.x + grid_w / 2 - 1;
-            let cy = grid_rect.y + grid_h / 2;
-            frame.render_widget(countdown_text, Rect::new(cx, cy, 3, 1));
-        }
-
         // Help text
-        let help_y = y + 2 + grid_h + 1;
+        let help_y = y + 3 + grid_h + 1;
         let help_line1 = Paragraph::new(Line::from(vec![
             Span::styled(
                 "Slide tiles to match the inner 3x3 to the goal.",
