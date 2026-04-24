@@ -88,12 +88,13 @@ impl Game {
     fn new() -> Self {
         let mut rng = rand::rng();
 
-        // Generate a random 3x3 goal from dice (each cell is a random color).
+        // Generate a random 3x3 goal, ensuring no color appears more than 4 times
+        // (since the board only has 4 of each color).
         let mut goal = [[TileColor::Red; 3]; 3];
-        for row in goal.iter_mut() {
-            for cell in row.iter_mut() {
-                *cell = ALL_COLORS[rand::random_range(0..ALL_COLORS.len())];
-            }
+        let mut pool: Vec<TileColor> = ALL_COLORS.iter().flat_map(|&c| [c; 4]).collect();
+        pool.shuffle(&mut rng);
+        for (i, cell) in goal.iter_mut().flat_map(|row| row.iter_mut()).enumerate() {
+            *cell = pool[i];
         }
 
         // 24 colored tiles + 1 empty = 25 (5x5).
