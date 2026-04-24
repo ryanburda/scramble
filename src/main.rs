@@ -361,8 +361,8 @@ fn draw(terminal: &mut Terminal<CrosstermBackend<io::Stdout>>, game: &Game) -> i
         // Stats line: moves + time + solved
         let elapsed = game.elapsed();
         let secs = elapsed.as_secs();
-        let tenths = elapsed.subsec_millis() / 100;
-        let time_str = format!("{:02}:{:02}.{}", secs / 60, secs % 60, tenths);
+        let millis = elapsed.subsec_millis();
+        let time_str = format!("{:02}:{:02}.{:03}", secs / 60, secs % 60, millis);
         let status = if game.solved { "  SOLVED!" } else { "" };
         let stats = Paragraph::new(Line::from(vec![
             Span::raw(format!("moves: {}  time: {}", game.moves, time_str)),
