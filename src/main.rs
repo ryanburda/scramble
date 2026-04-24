@@ -81,6 +81,7 @@ struct Game {
     solved: bool,
     started_at: Instant,
     solve_time: Option<Duration>,
+    countdown_end: Option<Instant>,
 }
 
 impl Game {
@@ -118,14 +119,16 @@ impl Game {
             }
         }
 
+        let countdown_end = Instant::now() + Duration::from_secs(3);
         let mut game = Game {
             board,
             goal,
             empty,
             moves: 0,
             solved: false,
-            started_at: Instant::now(),
+            started_at: countdown_end,
             solve_time: None,
+            countdown_end: Some(countdown_end),
         };
         game.check_solved();
         game
@@ -213,8 +216,30 @@ impl Game {
         }
     }
 
+    fn is_counting_down(&self) -> bool {
+        matches!(self.countdown_end, Some(end) if Instant::now() < end)
+    }
+
+    fn countdown_remaining(&self) -> u64 {
+        match self.countdown_end {
+            Some(end) => {
+                let now = Instant::now();
+                if now < end {
+                    (end - now).as_secs() + 1
+                } else {
+                    0
+                }
+            }
+            None => 0,
+        }
+    }
+
     fn elapsed(&self) -> Duration {
-        self.solve_time.unwrap_or_else(|| self.started_at.elapsed())
+        if self.is_counting_down() {
+            Duration::ZERO
+        } else {
+            self.solve_time.unwrap_or_else(|| self.started_at.elapsed())
+        }
     }
 
     fn handle_key(&mut self, c: char) {
@@ -372,6 +397,18 @@ fn draw(terminal: &mut Terminal<CrosstermBackend<io::Stdout>>, game: &Game) -> i
             }
         }
 
+        // Countdown overlay
+        if game.is_counting_down() {
+            let count = game.countdown_remaining();
+            let countdown_text = Paragraph::new(Line::from(Span::styled(
+                format!("{}", count),
+                Style::default().fg(Color::Yellow),
+            )));
+            let cx = grid_rect.x + grid_w / 2 - 1;
+            let cy = grid_rect.y + grid_h / 2;
+            frame.render_widget(countdown_text, Rect::new(cx, cy, 3, 1));
+        }
+
         // Help text
         let help_y = y + 2 + grid_h + 1;
         let help_line1 = Paragraph::new(Line::from(vec![
@@ -414,7 +451,7 @@ fn main() -> io::Result<()> {
                     KeyCode::Esc => break,
                     KeyCode::Char(' ') => game = Game::new(),
                     KeyCode::Char(c) => {
-                        if !game.solved {
+                        if !game.solved && !game.is_counting_down() {
                             game.handle_key(c);
                         }
                     }
