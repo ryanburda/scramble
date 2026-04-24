@@ -18,22 +18,22 @@ const ROWS: usize = 5;
 const COLS: usize = 5;
 
 /// Primary key layout for each grid position (shown on tiles).
-/// Row 0: y u i o p
-/// Row 1: h j k l ;
-/// Row 2: n m , . /
-/// Row 3: a s d f g
-/// Row 4: z x c v b
+/// Row 0: q w e r t  (left hand)
+/// Row 1: a s d f g  (left hand)
+/// Row 2: z x c v b  (left hand / shared)
+/// Row 3: h j k l ;  (right hand)
+/// Row 4: n m , . /  (right hand)
 const KEY_LABELS: [[char; COLS]; ROWS] = [
-    ['y', 'u', 'i', 'o', 'p'],
-    ['h', 'j', 'k', 'l', ';'],
-    ['n', 'm', ',', '.', '/'],
+    ['q', 'w', 'e', 'r', 't'],
     ['a', 's', 'd', 'f', 'g'],
     ['z', 'x', 'c', 'v', 'b'],
+    ['h', 'j', 'k', 'l', ';'],
+    ['n', 'm', ',', '.', '/'],
 ];
 
 /// Alternate key layout for row 2.
-/// Row 2 alt: q w e r t
-const ALT_ROW2: [char; COLS] = ['q', 'w', 'e', 'r', 't'];
+/// Row 2 alt: y u i o p  (right hand)
+const ALT_ROW2: [char; COLS] = ['y', 'u', 'i', 'o', 'p'];
 
 const ALL_COLORS: [TileColor; 6] = [
     TileColor::Red,
@@ -265,9 +265,9 @@ impl Game {
     }
 }
 
-fn render_tile_cell(tile: Tile, key: char, in_goal_zone: bool, show_keys: bool) -> Vec<Line<'static>> {
+fn render_tile_cell(tile: Tile, label: &str, in_goal_zone: bool, show_keys: bool) -> Vec<Line<'static>> {
     let key_str = if show_keys {
-        format!(" {:<6}", key)
+        format!(" {:<6}", label)
     } else {
         format!("{:7}", "")
     };
@@ -404,9 +404,13 @@ fn draw(terminal: &mut Terminal<CrosstermBackend<io::Stdout>>, game: &Game) -> i
             let cols = Layout::horizontal(col_constraints.clone()).split(*row_area);
             for (c, cell_area) in cols.iter().enumerate() {
                 let tile = game.board[r][c];
-                let key = KEY_LABELS[r][c];
+                let label = if r == 2 {
+                    format!("{}/{}", KEY_LABELS[r][c], ALT_ROW2[c])
+                } else {
+                    KEY_LABELS[r][c].to_string()
+                };
                 let in_goal_zone = r >= 1 && r <= 3 && c >= 1 && c <= 3;
-                let lines = render_tile_cell(tile, key, in_goal_zone, game.show_keys);
+                let lines = render_tile_cell(tile, &label, in_goal_zone, game.show_keys);
                 frame.render_widget(Paragraph::new(lines), *cell_area);
             }
         }

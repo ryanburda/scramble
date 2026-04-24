@@ -14,18 +14,18 @@ Tiles must be in the same row or column as the empty space.
 
 The board maps to your keyboard, split across both hands:
 
-**Right hand** (top of the board):
-```
- y  u  i  o  p      1st row (top)
- h  j  k  l  ;      2nd row
- n  m  ,  .  /      3rd row (middle)
-```
-
 **Left hand** (bottom of the board):
 ```
- q  w  e  r  t      3rd row (middle)
- a  s  d  f  g      4th row
- z  x  c  v  b      5th row (bottom
+ q  w  e  r  t      1st row (top)
+ a  s  d  f  g      2th row
+ z  x  c  v  b      3rd row (middle)
+```
+
+**Right hand** (top of the board):
+```
+ y  u  i  o  p      3rd row (middle)
+ h  j  k  l  ;      4th row
+ n  m  ,  .  /      5th row (bottom)
 ```
 
 Row 3 (middle) is accessible from both your left and right hand.
